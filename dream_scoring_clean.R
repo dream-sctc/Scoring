@@ -478,10 +478,14 @@ rank.post.folds <- function(path) {
   sub.summary <- ranks %>%
     ungroup() %>%
     group_by(team) %>%
-    select(contains("sub"))
+    select(contains("sub"), fold) %>% ungroup %>%
+    group_by(fold) %>% 
+    mutate(sub1 = rank(sub1), sub2 = rank(sub2), sub3 = rank(sub3)) %>% 
+    ungroup %>% select(-fold)
 
   # final ranking + draw boxplots
-  avranks <- sub.summary %>% summarise(ar1 = mean(sub1), ar2 = mean(sub2), ar3 = mean(sub3))
+  avranks <- sub.summary %>% group_by(team) %>% 
+    summarise(ar1 = mean(sub1), ar2 = mean(sub2), ar3 = mean(sub3))
 
   sub.summary %<>% ungroup %>%
     mutate(ar1 = rep(avranks$ar1, each = 10), ar2 = rep(avranks$ar2, each = 10), ar3 = rep(avranks$ar3, each = 10))
@@ -494,7 +498,13 @@ rank.post.folds <- function(path) {
   sub.summary$ar3 <- sub.summary$ar3 + jitter
 
   par(mar = c(5, 10.5, 4, 2) + 0.1)
-  boxplot(sub1 ~ ar1, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar1)], main = "Subchallenge 1")
-  boxplot(sub2 ~ ar2, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar2, na.last = NA)], main = "Subchallenge 2")
-  boxplot(sub3 ~ ar3, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar3, na.last = NA)], main = "Subchallenge 3")
+  boxplot(sub1 ~ ar1, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), 
+          xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar1)], 
+          main = "Subchallenge 1")
+  boxplot(sub2 ~ ar2, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), 
+          xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar2, na.last = NA)], 
+          main = "Subchallenge 2")
+  boxplot(sub3 ~ ar3, sub.summary, horizontal = T, las = 2, xlim = c(13, 0), 
+          xlab = "Rank", ylab = "", names = avranks$team[order(avranks$ar3, na.last = NA)], 
+          main = "Subchallenge 3")
 }
